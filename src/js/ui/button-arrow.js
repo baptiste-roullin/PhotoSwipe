@@ -18,7 +18,7 @@ function initArrowButton(element, pswp, isNextButton) {
 export const arrowPrev = {
   name: 'arrowPrev',
   class: 'arrow--prev',
-  title: 'Previous',
+  title: 'Précédent',
   order: 10,
   isButton: true,
   appendTo: 'wrapper',
@@ -35,7 +35,7 @@ export const arrowPrev = {
 export const arrowNext = {
   name: 'arrowNext',
   class: 'arrow--next',
-  title: 'Next',
+  title: 'Suivant',
   order: 11,
   isButton: true,
   appendTo: 'wrapper',

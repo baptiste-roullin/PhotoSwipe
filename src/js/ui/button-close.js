@@ -1,6 +1,6 @@
 const closeButton = {
   name: 'close',
-  title: 'Close',
+  title: 'Fermer',
   order: 20,
   isButton: true,
   html: {
