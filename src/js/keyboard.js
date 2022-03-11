@@ -29,8 +29,8 @@ class Keyboard {
     const lastActiveElement = document.activeElement;
     pswp.on('destroy', () => {
       if (pswp.options.returnFocus
-          && lastActiveElement
-          && this._wasFocused) {
+        && lastActiveElement
+        && this._wasFocused) {
         lastActiveElement.focus();
       }
     });
@@ -67,9 +67,6 @@ class Keyboard {
           keydownAction = 'close';
         }
         break;
-      case 90: // z key
-        keydownAction = 'toggleZoom';
-        break;
       case 37: // left
         axis = 'x';
         break;
@@ -98,8 +95,8 @@ class Keyboard {
       const { currSlide } = pswp;
 
       if (pswp.options.arrowKeys
-          && axis === 'x'
-          && pswp.getNumItems() > 1) {
+        && axis === 'x'
+        && pswp.getNumItems() > 1) {
         keydownAction = isForward ? 'next' : 'prev';
       } else if (currSlide && currSlide.currZoomLevel > currSlide.zoomLevels.fit) {
         // up/down arrow keys pan the image vertically
@@ -125,8 +122,8 @@ class Keyboard {
   _onFocusIn(e) {
     const { template } = this.pswp;
     if (document !== e.target
-        && template !== e.target
-        && !template.contains(e.target)) {
+      && template !== e.target
+      && !template.contains(e.target)) {
       // focus root element
       template.focus();
     }
