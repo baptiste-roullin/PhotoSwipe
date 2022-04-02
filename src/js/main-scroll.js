@@ -121,14 +121,23 @@ class MainScroll {
   moveIndexBy(diff, animate, velocityX) {
     const { pswp } = this;
     let newIndex = pswp.potentialIndex + diff;
+    const numSlides = pswp.getNumItems();
 
-    if (pswp.options.loop) {
+    if (pswp.canLoop()) {
       newIndex = pswp.getLoopedIndex(newIndex);
+      const distance = (diff + numSlides) % numSlides;
+      if (distance <= numSlides / 2) {
+        // go forward
+        diff = distance;
+      } else {
+        // go backwards
+        diff = distance - numSlides;
+      }
     } else {
       if (newIndex < 0) {
         newIndex = 0;
-      } else if (newIndex >= pswp.getNumItems()) {
-        newIndex = pswp.getNumItems() - 1;
+      } else if (newIndex >= numSlides) {
+        newIndex = numSlides - 1;
       }
       diff = newIndex - pswp.potentialIndex;
     }
@@ -159,9 +168,21 @@ class MainScroll {
         }
       });
 
+      let currDiff = pswp.potentialIndex - pswp.currIndex;
+      if (pswp.canLoop()) {
+        const currDistance = (currDiff + numSlides) % numSlides;
+        if (currDistance <= numSlides / 2) {
+          // go forward
+          currDiff = currDistance;
+        } else {
+          // go backwards
+          currDiff = currDistance - numSlides;
+        }
+      }
+
       // Force-append new slides during transition
       // if difference between slides is more than 1
-      if (Math.abs(pswp.potentialIndex - pswp.currIndex) > 1) {
+      if (Math.abs(currDiff) > 1) {
         this.updateCurrItem();
       }
     }
@@ -270,7 +291,7 @@ class MainScroll {
     let newSlideIndexOffset;
     let delta;
 
-    if (!this.pswp.options.loop && dragging) {
+    if (!this.pswp.canLoop() && dragging) {
       // Apply friction
       newSlideIndexOffset = ((this.slideWidth * this._currPositionIndex) - x) / this.slideWidth;
       newSlideIndexOffset += this.pswp.currIndex;

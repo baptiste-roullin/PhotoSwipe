@@ -1,4 +1,6 @@
-v5 is now available for testing, please visit [documentation and examples](https://photoswipe.com/v5/docs/getting-started/) and report any issues that you find.
+```
+npm install photoswipe#beta
+```
 
 [![Sponsor via OpenCollective](https://img.shields.io/opencollective/all/photoswipe?label=Sponsor%20via%20OpenCollective)](https://opencollective.com/photoswipe)
 [![Follow on Twitter](https://img.shields.io/twitter/follow/photoswipe?style=social)](https://twitter.com/intent/user?screen_name=photoswipe)
@@ -21,8 +23,8 @@ v5 is now available for testing, please visit [documentation and examples](https
 
 ### Build docs and demos
 
-- npm install in root
-- npm install in `/website/` directory to get docusaurus (if you also need to build docs)
+- `npm install` in root
+- `npm install` in `/website/` directory to get docusaurus (if you also need to build docs)
 - `npm run watch` - watches changes for files in `src/` and `docs/`, starts Docusaurus - demo website with many examples where you perform manual tests, at 3000 port (visit [http://localhost:3000](http://localhost:3000)).
 
 

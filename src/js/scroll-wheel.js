@@ -5,7 +5,7 @@
 class ScrollWheel {
   constructor(pswp) {
     this.pswp = pswp;
-    pswp.events.add(pswp.template, 'wheel', this._onWheel.bind(this));
+    pswp.events.add(pswp.element, 'wheel', this._onWheel.bind(this));
   }
 
   _onWheel(e) {
@@ -31,10 +31,6 @@ class ScrollWheel {
           zoomFactor *= e.deltaMode ? 1 : 0.002;
         }
         zoomFactor = 2 ** zoomFactor;
-
-        if (this.pswp.options.getWheelZoomFactorFn) {
-          zoomFactor = this.pswp.options.getWheelZoomFactorFn(e, this.pswp);
-        }
 
         const destZoomLevel = currSlide.currZoomLevel * zoomFactor;
         currSlide.zoomTo(destZoomLevel, {

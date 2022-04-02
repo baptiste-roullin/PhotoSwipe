@@ -32,31 +32,25 @@ const defaultOptions = {
   escKey: true,
   arrowKeys: true,
   returnFocus: true,
-  limitMaxZoom: true,
-
+  maxWidthToAnimate: 4000,
   clickToCloseNonZoomable: true,
   imageClickAction: 'zoom-or-close',
   bgClickAction: 'close',
   tapAction: 'toggle-controls',
   doubleTapAction: 'zoom',
-
   indexIndicatorSep: ' / ',
-  
   preloaderDelay: 2000,
-
   bgOpacity: 0.8,
 
   index: 0,
-  errorMsg: '<div class="pswp__error-msg"><a href="" target="_blank">The image</a> could not be loaded.</div>',
+  errorMsg: 'The image cannot be loaded',
   preload: [1, 2],
   easing: 'cubic-bezier(.4,0,.22,1)'
 };
 
 class PhotoSwipe extends PhotoSwipeBase {
-  constructor(items, options) {
+  constructor(options) {
     super();
-
-    this.items = items;
 
     this._prepareOptions(options);
 
@@ -89,34 +83,20 @@ class PhotoSwipe extends PhotoSwipeBase {
     }
 
     this.isOpen = true;
-
-    if (this.getNumItems() < 3) {
-      // disable loop if less than 3 items,
-      // as we do not clone slides
-      this.options.loop = false;
-    }
-
-    this.dispatch('init');
+    this.dispatch('init'); // legacy
+    this.dispatch('beforeOpen');
 
     this._createMainStructure();
-
-    // init modules
-    // _modules.forEach(function (module) {
-    //   module();
-    // });
 
     // add classes to the root element of PhotoSwipe
     let rootClasses = 'pswp--open';
     if (this.gestures.supportsTouch) {
       rootClasses += ' pswp--touch';
     }
-    if (!this.options.allowMouseDrag) {
-      rootClasses += ' pswp--no-mouse-drag';
-    }
     if (this.options.mainClass) {
       rootClasses += ' ' + this.options.mainClass;
     }
-    this.template.className += ' ' + rootClasses;
+    this.element.className += ' ' + rootClasses;
 
     this.currIndex = this.options.index || 0;
     this.potentialIndex = this.currIndex;
@@ -149,7 +129,7 @@ class PhotoSwipe extends PhotoSwipeBase {
     this._initialThumbBounds = this.getThumbBounds();
     this.dispatch('initialLayout');
 
-    this.on('initialZoomInEnd', () => {
+    this.on('openingAnimationEnd', () => {
       // Add content to the previous and next slide
       this.setContent(this.mainScroll.itemHolders[0], this.currIndex - 1);
       this.setContent(this.mainScroll.itemHolders[2], this.currIndex + 1);
@@ -164,20 +144,6 @@ class PhotoSwipe extends PhotoSwipeBase {
       this.events.add(window, 'resize', this._handlePageResize.bind(this));
       this.events.add(window, 'scroll', this._updatePageScrollOffset.bind(this));
       this.dispatch('bindEvents');
-    });
-
-    // remove placeholder when slide is loaded
-    this.on('loadComplete', (e) => {
-      if (e.slide.heavyAppended) {
-        e.slide.removePlaceholder();
-      }
-    });
-
-    this.on('loadError', (e) => {
-      if (e.slide.heavyAppended) {
-        e.slide.removePlaceholder();
-        e.slide.displayError();
-      }
     });
 
     // set content for center slide (first time)
@@ -215,29 +181,6 @@ class PhotoSwipe extends PhotoSwipeBase {
     return index;
   }
 
-  /**
-   * Get the difference between current index and provided index.
-   * Used to determine the direction of movement
-   * or if slide should be moved at all.
-   *
-   * @param {Integer} index
-   */
-  getIndexDiff(index) {
-    if (this.options.loop) {
-      const lastItemIndex = this.getNumItems() - 1;
-      // Moving from the last to the first or vice-versa:
-      if (this.currIndex === 0 && index === lastItemIndex) {
-        // go back one slide
-        return -1;
-      } if (this.currIndex === lastItemIndex && index === 0) {
-        // go forward one slide
-        return 1;
-      }
-    }
-
-    return index - this.currIndex;
-  }
-
   appendHeavy() {
     this.mainScroll.itemHolders.forEach((itemHolder) => {
       if (itemHolder.slide) {
@@ -251,14 +194,9 @@ class PhotoSwipe extends PhotoSwipeBase {
    * @param  {Integer} New index
    */
   goTo(index) {
-    index = this.getLoopedIndex(index);
-
-    // TODO: allow to pause the event propagation?
-
-    const indexChanged = this.mainScroll.moveIndexBy(index - this.potentialIndex);
-    if (indexChanged) {
-      this.dispatch('afterGoto');
-    }
+    this.mainScroll.moveIndexBy(
+      this.getLoopedIndex(index) - this.potentialIndex
+    );
   }
 
   /**
@@ -269,7 +207,7 @@ class PhotoSwipe extends PhotoSwipeBase {
   }
 
   /**
-   * Go to the next slide.
+   * Go to the previous slide.
    */
   prev() {
     this.goTo(this.potentialIndex - 1);
@@ -308,12 +246,14 @@ class PhotoSwipe extends PhotoSwipeBase {
 
   /**
    * Destroys the gallery:
+   * - instantly closes the gallery
    * - unbinds events,
    * - cleans intervals and timeouts
    * - removes elements from DOM
    */
   destroy() {
     if (!this.isDestroying) {
+      this.options.showHideAnimationType = 'none';
       this.close();
       return;
     }
@@ -325,22 +265,72 @@ class PhotoSwipe extends PhotoSwipeBase {
     this.scrollWrap.ontouchmove = null;
     this.scrollWrap.ontouchend = null;
 
-    this.template.remove();
+    this.element.remove();
+
+    this.mainScroll.itemHolders.forEach((itemHolder) => {
+      if (itemHolder.slide) {
+        itemHolder.slide.destroy();
+      }
+    });
+
     this.contentLoader.destroy();
     this.events.removeAll();
   }
 
-  setContent(holder, index) {
-    // destroy previous slide to clean the memory
-    if (holder.slide) {
-      holder.slide.destroy();
+  /**
+   * Refresh/reload content of a slide by its index
+   *
+   * @param {Integer} slideIndex
+   */
+  refreshSlideContent(slideIndex) {
+    this.contentLoader.removeByIndex(slideIndex);
+    this.mainScroll.itemHolders.forEach((itemHolder, i) => {
+      let potentialHolderIndex = this.currSlide.index - 1 + i;
+      if (this.canLoop()) {
+        potentialHolderIndex = this.getLoopedIndex(potentialHolderIndex);
+      }
+      if (potentialHolderIndex === slideIndex) {
+        // set the new slide content
+        this.setContent(itemHolder, slideIndex, true);
+
+        // activate the new slide if it's current
+        if (i === 1) {
+          this.currSlide = itemHolder.slide;
+          itemHolder.slide.setIsActive(true);
+        }
+      }
+    });
+
+    this.dispatch('change');
+  }
+
+
+  /**
+   * Set slide content
+   *
+   * @param {Object} holder mainScroll.itemHolders array item
+   * @param {Integer} index Slide index
+   * @param {Boolean} force If content should be set even if index wasn't changed
+   */
+  setContent(holder, index, force) {
+    if (this.canLoop()) {
+      index = this.getLoopedIndex(index);
     }
 
-    if (this.options.loop) {
-      index = this.getLoopedIndex(index);
-    } else if (index < 0 || index >= this.getNumItems()) {
-      // empty holder
-      holder.el.innerHTML = '';
+    if (holder.slide) {
+      if (holder.slide.index === index && !force) {
+        // exit if holder already contains this slide
+        // this could be common when just three slides are used
+        return;
+      }
+
+      // destroy previous slide
+      holder.slide.destroy();
+      holder.slide = null;
+    }
+
+    // exit if no loop and index is out of bounds
+    if (!this.canLoop() && (index < 0 || index >= this.getNumItems())) {
       return;
     }
 
@@ -422,7 +412,7 @@ class PhotoSwipe extends PhotoSwipeBase {
   mouseDetected() {
     if (!this.hasMouse) {
       this.hasMouse = true;
-      this.template.classList.add('pswp--has_mouse');
+      this.element.classList.add('pswp--has_mouse');
     }
   }
 
@@ -465,14 +455,17 @@ class PhotoSwipe extends PhotoSwipeBase {
    */
   _createMainStructure() {
     // root DOM element of PhotoSwipe (.pswp)
-    this.template = createElement('pswp');
-    this.template.setAttribute('tabindex', -1);
-    this.template.setAttribute('role', 'dialog');
+    this.element = createElement('pswp');
+    this.element.setAttribute('tabindex', -1);
+    this.element.setAttribute('role', 'dialog');
+
+    // template is legacy prop
+    this.template = this.element;
 
     // Background is added as a separate element,
     // as animating opacity is faster than animating rgba()
-    this.bg = createElement('pswp__bg', false, this.template);
-    this.scrollWrap = createElement('pswp__scroll-wrap', false, this.template);
+    this.bg = createElement('pswp__bg', false, this.element);
+    this.scrollWrap = createElement('pswp__scroll-wrap', false, this.element);
     this.container = createElement('pswp__container', false, this.scrollWrap);
 
     this.mainScroll.appendHolders();
@@ -481,7 +474,7 @@ class PhotoSwipe extends PhotoSwipeBase {
     this.ui.init();
 
     // append to DOM
-    (this.options.appendToEl || document.body).appendChild(this.template);
+    (this.options.appendToEl || document.body).appendChild(this.element);
   }
 
 
@@ -499,6 +492,14 @@ class PhotoSwipe extends PhotoSwipeBase {
     );
   }
 
+  /**
+   * If the PhotoSwipe can have continious loop
+   * @returns Boolean
+   */
+  canLoop() {
+    return (this.options.loop && this.getNumItems() > 2);
+  }
+
   _prepareOptions(options) {
     if (window.matchMedia('(prefers-reduced-motion), (update: slow)').matches) {
       options.showHideAnimationType = 'none';
@@ -513,5 +514,3 @@ class PhotoSwipe extends PhotoSwipeBase {
 }
 
 export default PhotoSwipe;
-export { default as Content } from './slide/content/content.js';
-export { default as ImageContent } from './slide/content/image.js';

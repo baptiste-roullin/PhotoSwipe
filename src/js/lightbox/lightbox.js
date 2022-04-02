@@ -16,10 +16,10 @@
 
 import {
   specialKeyUsed,
-  getElementsFromOption
+  getElementsFromOption,
+  isClass
 } from '../util/util.js';
 
-import { dynamicImportModule } from './dynamic-import.js';
 import PhotoSwipeBase from '../core/base.js';
 import { lazyLoadSlide } from '../slide/loader.js';
 
@@ -61,7 +61,8 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
       initialPoint = null;
     }
 
-    const clickedIndex = this.getClickedIndex(e);
+    let clickedIndex = this.getClickedIndex(e);
+    clickedIndex = this.applyFilters('clickedIndex', clickedIndex, e, this);
     const dataSource = {
       gallery: e.currentTarget
     };
@@ -78,6 +79,7 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
    * @param {Event} e click event
    */
   getClickedIndex(e) {
+    // legacy option
     if (this.options.getClickedIndexFn) {
       return this.options.getClickedIndexFn.call(this, e);
     }
@@ -140,7 +142,18 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
     }
 
     // Add the main module
-    const promiseArray = [dynamicImportModule(options.pswpModule)];
+    const promiseArray = [];
+
+    const pswpModuleType = typeof options.pswpModule;
+    if (isClass(options.pswpModule)) {
+      promiseArray.push(options.pswpModule);
+    } else if (pswpModuleType === 'string') {
+      throw new Error('pswpModule as string is no longer supported');
+    } else if (pswpModuleType === 'function') {
+      promiseArray.push(options.pswpModule());
+    } else {
+      throw new Error('pswpModule is not valid');
+    }
 
     // Add custom-defined promise, if any
     if (typeof options.openPromise === 'function') {
@@ -181,8 +194,8 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
 
     // Pass data to PhotoSwipe and open init
     const pswp = typeof module === 'object'
-        ? new module.default(null, this.options) // eslint-disable-line
-        : new module(null, this.options); // eslint-disable-line
+        ? new module.default(this.options) // eslint-disable-line
+        : new module(this.options); // eslint-disable-line
 
     this.pswp = pswp;
     window.pswp = pswp;
@@ -201,9 +214,6 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
       });
     });
 
-    // same with content types
-    pswp.contentTypes = { ...this.contentTypes };
-
     if (this._preloadedContent) {
       pswp.contentLoader.addToCache(this._preloadedContent);
       this._preloadedContent = null;
@@ -220,7 +230,7 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
 
   destroy() {
     if (this.pswp) {
-      this.pswp.close();
+      this.pswp.destroy();
     }
 
     this.shouldOpen = false;
@@ -234,5 +244,3 @@ class PhotoSwipeLightbox extends PhotoSwipeBase {
 }
 
 export default PhotoSwipeLightbox;
-export { default as Content } from '../slide/content/content.js';
-export { default as ImageContent } from '../slide/content/image.js';

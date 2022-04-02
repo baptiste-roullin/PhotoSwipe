@@ -17,9 +17,6 @@ import {
 // we set it to the minimum amount
 const MIN_OPACITY = 0.003;
 
-// Transitions for slides wider than this will be discarded
-const MAX_SLIDE_WIDTH_TO_ANIMATE = 4000;
-
 class Opener {
   constructor(pswp) {
     this.pswp = pswp;
@@ -50,9 +47,7 @@ class Opener {
     this.isClosing = true;
     this._duration = this.pswp.options.hideAnimationDuration;
 
-    // Automatically disable transition if the current slide
-    // is at MAX_SLIDE_WIDTH_TO_ANIMATE or wider
-    if (slide && slide.currZoomLevel * slide.width >= MAX_SLIDE_WIDTH_TO_ANIMATE) {
+    if (slide && slide.currZoomLevel * slide.width >= this.pswp.options.maxWidthToAnimate) {
       this._duration = 0;
     }
 
@@ -67,9 +62,13 @@ class Opener {
   _prepareOpen() {
     this.pswp.off('firstZoomPan', this._prepareOpen);
     if (!this.isOpening) {
+      const slide = this.pswp.currSlide;
       this.isOpening = true;
       this.isClosing = false;
       this._duration = this.pswp.options.showAnimationDuration;
+      if (slide && slide.zoomLevels.initial * slide.width >= this.pswp.options.maxWidthToAnimate) {
+        this._duration = 0;
+      }
       this._applyStartProps();
     }
   }
@@ -100,6 +99,7 @@ class Opener {
     // Discard animations when duration is less than 50ms
     this._useAnimation = (this._duration > 50);
     this._animateZoom = Boolean(this._thumbBounds)
+                        && (slide.content && slide.content.usePlaceholder())
                         && (!this.isClosing || !pswp.mainScroll.isShifted());
     if (!this._animateZoom) {
       this._animateRootOpacity = true;
@@ -111,8 +111,8 @@ class Opener {
     } else {
       this._animateRootOpacity = options.showHideOpacity;
     }
-    this._animateBgOpacity = !this._animateRootOpacity;
-    this._opacityElement = this._animateRootOpacity ? pswp.template : pswp.bg;
+    this._animateBgOpacity = !this._animateRootOpacity && this.pswp.options.bgOpacity > MIN_OPACITY;
+    this._opacityElement = this._animateRootOpacity ? pswp.element : pswp.bg;
 
     if (!this._useAnimation) {
       this._duration = 0;
@@ -120,7 +120,7 @@ class Opener {
       this._animateBgOpacity = false;
       this._animateRootOpacity = true;
       if (this.isOpening) {
-        pswp.template.style.opacity = MIN_OPACITY;
+        pswp.element.style.opacity = MIN_OPACITY;
         pswp.applyBgOpacity(1);
       }
       return;
@@ -140,14 +140,14 @@ class Opener {
 
     if (this.isOpening) {
       // Apply styles before opening transition
-      if (this._animateBgOpacity) {
-        pswp.bg.style.opacity = MIN_OPACITY;
-        pswp.template.style.opacity = 1;
-      }
-
       if (this._animateRootOpacity) {
-        pswp.template.style.opacity = MIN_OPACITY;
+        pswp.element.style.opacity = MIN_OPACITY;
         pswp.applyBgOpacity(1);
+      } else {
+        if (this._animateBgOpacity) {
+          pswp.bg.style.opacity = MIN_OPACITY;
+        }
+        pswp.element.style.opacity = 1;
       }
 
       if (this._animateZoom) {
@@ -211,10 +211,16 @@ class Opener {
   }
 
   _initiate() {
-    this.pswp.template.style.setProperty('--pswp-transition-duration', this._duration + 'ms');
+    this.pswp.element.style.setProperty('--pswp-transition-duration', this._duration + 'ms');
 
+    this.pswp.dispatch(
+      this.isOpening ? 'openingAnimationStart' : 'closingAnimationStart'
+    );
+
+    // legacy event
     this.pswp.dispatch('initialZoom' + (this.isOpening ? 'In' : 'Out'));
-    this.pswp.template.classList[this.isOpening ? 'add' : 'remove']('pswp--ui-visible');
+
+    this.pswp.element.classList[this.isOpening ? 'add' : 'remove']('pswp--ui-visible');
 
     if (this.isOpening) {
       if (this._placeholder) {
@@ -238,6 +244,11 @@ class Opener {
     this.isOpening = false;
     this.isClosing = false;
 
+    pswp.dispatch(
+      this.isOpen ? 'openingAnimationEnd' : 'closingAnimationEnd'
+    );
+
+    // legacy event
     pswp.dispatch('initialZoom' + (this.isOpen ? 'InEnd' : 'OutEnd'));
 
     if (this.isClosed) {
@@ -272,7 +283,7 @@ class Opener {
     }
 
     if (this._animateRootOpacity) {
-      this._animateTo(pswp.template, 'opacity', 1);
+      this._animateTo(pswp.element, 'opacity', 1);
     }
   }
 
@@ -289,7 +300,7 @@ class Opener {
     }
 
     if (this._animateRootOpacity) {
-      this._animateTo(pswp.template, 'opacity', 0);
+      this._animateTo(pswp.element, 'opacity', 0);
     }
   }
 

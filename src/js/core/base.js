@@ -6,18 +6,10 @@ import Eventable from './eventable';
 import {
   getElementsFromOption
 } from '../util/util.js';
-import ImageContent from '../slide/content/image.js';
-import Content from '../slide/content/content';
+import Content from '../slide/content';
+
 
 class PhotoSwipeBase extends Eventable {
-  constructor() {
-    super();
-    this.contentTypes = {
-      image: ImageContent,
-      html: Content
-    };
-  }
-
   /**
    * Get total number of slides
    */
@@ -48,40 +40,8 @@ class PhotoSwipeBase extends Eventable {
     return this.applyFilters('numItems', event.numItems, dataSource);
   }
 
-  /**
-   * Add or set slide content type
-   *
-   * @param {String} type
-   * @param {Class} ContentClass
-   */
-  addContentType(type, ContentClass) {
-    this.contentTypes[type] = ContentClass;
-  }
-
-  /**
-   * Get slide content class based on its data
-   *
-   * @param {Object} slideData
-   * @param {Integer} slideIndex
-   * @returns Class
-   */
-  getContentClass(slideData) {
-    if (slideData.type) {
-      return this.contentTypes[slideData.type];
-    } else if (slideData.src) {
-      return this.contentTypes.image;
-    } else if (slideData.html) {
-      return this.contentTypes.html;
-    }
-  }
-
-  createContentFromData(slideData) {
-    const ContentClass = this.getContentClass(slideData);
-    if (!ContentClass) {
-      return false;
-    }
-    const content = new ContentClass(slideData, this);
-    return content;
+  createContentFromData(slideData, index) {
+    return new Content(slideData, this, index);
   }
 
   /**
@@ -164,10 +124,16 @@ class PhotoSwipeBase extends Eventable {
       // if it's empty link href is used
       itemData.src = linkEl.dataset.pswpSrc || linkEl.href;
 
-      itemData.srcset = linkEl.dataset.pswpSrcset;
+      if (linkEl.dataset.pswpSrcset) {
+        itemData.srcset = linkEl.dataset.pswpSrcset;
+      }
 
-      itemData.w = parseInt(linkEl.dataset.pswpWidth, 10);
-      itemData.h = parseInt(linkEl.dataset.pswpHeight, 10);
+      itemData.width = parseInt(linkEl.dataset.pswpWidth, 10);
+      itemData.height = parseInt(linkEl.dataset.pswpHeight, 10);
+
+      // support legacy w & h properties
+      itemData.w = itemData.width;
+      itemData.h = itemData.height;
 
       if (linkEl.dataset.pswpType) {
         itemData.type = linkEl.dataset.pswpType;
@@ -176,8 +142,8 @@ class PhotoSwipeBase extends Eventable {
       const thumbnailEl = element.querySelector('img');
 
       if (thumbnailEl) {
-        // define msrc only if it's the first slide,
-        // as rendering (even small stretched thumbnail) is an expensive operation
+        // msrc is URL to placeholder image that's displayed before large image is loaded
+        // by default it's displayed only for the first slide
         itemData.msrc = thumbnailEl.currentSrc || thumbnailEl.src;
         itemData.alt = thumbnailEl.getAttribute('alt');
       }

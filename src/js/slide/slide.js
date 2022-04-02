@@ -9,14 +9,11 @@ import {
   roundPoint,
   toTransformString,
   clamp,
-  LOAD_STATE,
-  setWidthHeight,
 } from '../util/util.js';
 
 import PanBounds from './pan-bounds.js';
 import ZoomLevel from './zoom-level.js';
 import { getPanAreaSize } from '../util/viewport-size.js';
-import Placeholder from './placeholder.js';
 
 class Slide {
   constructor(data, index, pswp) {
@@ -43,6 +40,7 @@ class Slide {
     };
 
     this.content = this.pswp.contentLoader.getContentBySlide(this);
+    this.container = createElement('pswp__zoom-wrap');
 
     this.currZoomLevel = 1;
     this.width = this.content.width;
@@ -85,7 +83,6 @@ class Slide {
 
     this.calculateSize();
 
-    this.container = createElement('pswp__zoom-wrap');
     this.container.transformOrigin = '0 0';
 
     this.load();
@@ -108,41 +105,9 @@ class Slide {
     }
   }
 
-  removePlaceholder() {
-    if (this.placeholder && this.content && !this.content.keepPlaceholder()) {
-      // With delay, as image might be loaded, but not decoded
-      setTimeout(() => {
-        if (this.placeholder) {
-          this.placeholder.destroy();
-          this.placeholder = null;
-        }
-      }, 500);
-    }
-  }
-
   load() {
-    if (this.usePlaceholder() && !this.placeholder) {
-      const placeholderSrc = this.pswp.applyFilters(
-        'placeholderSrc',
-        (this.data.msrc && this.isFirstSlide) ? this.data.msrc : false,
-        this
-      );
-      this.placeholder = new Placeholder(
-        placeholderSrc,
-        this.container
-      );
-    }
-
     this.content.load();
     this.pswp.dispatch('slideLoad', { slide: this });
-  }
-
-  isLoading() {
-    return this.pswp.applyFilters(
-      'isSlideLoading',
-      this.content.isLoading && this.content.isLoading(),
-      this
-    );
   }
 
   /**
@@ -153,7 +118,7 @@ class Slide {
    */
   appendHeavy() {
     const { pswp } = this;
-    const appendHeavyNearby = true;
+    const appendHeavyNearby = true; // todo
 
     // Avoid appending heavy elements during animations
     if (this.heavyAppended
@@ -169,42 +134,9 @@ class Slide {
 
     this.heavyAppended = true;
 
-    if (this.content.state === LOAD_STATE.ERROR) {
-      this.displayError();
-    } else {
-      this.content.appendTo(this.container);
-      if (this.placeholder && this.content.state === LOAD_STATE.LOADED) {
-        this.removePlaceholder();
-      }
-    }
+    this.content.append();
 
     this.pswp.dispatch('appendHeavyContent', { slide: this });
-  }
-
-  /**
-   * Append HTML content to slide container
-   * (usually item.html or error message)
-   *
-   * @param {DOMElement} containerEl
-   * @param {String} html
-   */
-  setSlideHTML(html) {
-    const { container } = this;
-    if (html.tagName) {
-      container.appendChild(html);
-    } else {
-      container.innerHTML = html;
-    }
-  }
-
-  displayError() {
-    const errorElement = this.content.getErrorElement();
-    errorElement.style.position = 'absolute';
-    errorElement.style.left = 0;
-    errorElement.style.top = 0;
-    this.activeErrorElement = errorElement;
-    this.setSlideHTML(errorElement);
-    this.updateContentSize(true);
   }
 
   /**
@@ -243,6 +175,7 @@ class Slide {
    * (unbind all events and destroy internal components)
    */
   destroy() {
+    this.content.hasSlide = false;
     this.content.remove();
     this.pswp.dispatch('slideDestroy', { slide: this });
   }
@@ -288,15 +221,6 @@ class Slide {
     if (!this.sizeChanged(width, height) && !force) {
       return;
     }
-
-    if (this.placeholder) {
-      this.placeholder.setDisplayedSize(width, height);
-    }
-
-    if (this.activeErrorElement) {
-      setWidthHeight(this.activeErrorElement, width, height);
-    }
-
     this.content.setDisplayedSize(width, height);
   }
 
@@ -312,8 +236,8 @@ class Slide {
   }
 
   getPlaceholderElement() {
-    if (this.placeholder) {
-      return this.placeholder.element;
+    if (this.content.placeholder) {
+      return this.content.placeholder.element;
     }
   }
 
@@ -455,10 +379,6 @@ class Slide {
     return this.width && this.content.isZoomable();
   }
 
-  usePlaceholder() {
-    return this.content.usePlaceholder();
-  }
-
   /**
    * Apply transform and scale based on
    * the current pan position (this.pan) and zoom level (this.currZoomLevel)
@@ -492,15 +412,11 @@ class Slide {
   }
 
   calculateSize() {
-    // this.zoomLevels.fit = 1;
-    // this.zoomLevels.vFill = 1;
-    // this.zoomLevels.initial = 1;
-
     const { pswp } = this;
 
     equalizePoints(
       this.panAreaSize,
-      getPanAreaSize(pswp.options, pswp.viewportSize, pswp)
+      getPanAreaSize(pswp.options, pswp.viewportSize, this.data, this.index)
     );
 
     this.zoomLevels.update(this.width, this.height, this.panAreaSize);

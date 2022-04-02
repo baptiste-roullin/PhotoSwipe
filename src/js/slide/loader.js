@@ -4,21 +4,6 @@ import ZoomLevel from './zoom-level.js';
 const MIN_SLIDES_TO_CACHE = 5;
 
 /**
- * Returns cache key by slide index and data
- *
- * @param {Object} itemData
- * @param {Integer} index
- * @returns {String}
- */
-export function getKey(itemData, index) {
-  if (itemData && itemData.src) {
-    return itemData.src + '_' + index;
-  }
-  return index;
-}
-
-
-/**
  * Lazy-load an image
  * This function is used both by Lightbox and PhotoSwipe core,
  * thus it can be called before dialog is opened.
@@ -30,20 +15,18 @@ export function getKey(itemData, index) {
  */
 export function lazyLoadData(itemData, instance, index) {
   // src/slide/content/content.js
-  const content = instance.createContentFromData(itemData);
+  const content = instance.createContentFromData(itemData, index);
 
   if (!content || !content.lazyLoad) {
     return;
   }
-
-  content.key = getKey(itemData, index);
 
   const { options } = instance;
 
   // We need to know dimensions of the image to preload it,
   // as it might use srcset and we need to define sizes
   const viewportSize = instance.viewportSize || getViewportSize(options);
-  const panAreaSize = getPanAreaSize(options, viewportSize);
+  const panAreaSize = getPanAreaSize(options, viewportSize, itemData, index);
 
   const zoomLevel = new ZoomLevel(options, itemData, -1);
   zoomLevel.update(content.width, content.height, panAreaSize);
@@ -119,23 +102,24 @@ class ContentLoader {
 
   loadSlideByIndex(index) {
     index = this.pswp.getLoopedIndex(index);
-    const itemData = this.pswp.getItemData(index);
-    const key = getKey(itemData, index);
-    let content = this.getContentByKey(key);
+    // try to get cached content
+    let content = this.getContentByIndex(index);
     if (!content) {
+      // no cached content, so try to load from scratch:
       content = lazyLoadSlide(index, this.pswp);
-      content.key = key;
-      this.addToCache(content);
+      // if content can be loaded, add it to cache:
+      if (content) {
+        this.addToCache(content);
+      }
     }
   }
 
   getContentBySlide(slide) {
-    let content = this.getContentByKey(this.getKeyBySlide(slide));
+    let content = this.getContentByIndex(slide.index);
     if (!content) {
       // create content if not found in cache
-      content = this.pswp.createContentFromData(slide.data);
+      content = this.pswp.createContentFromData(slide.data, slide.index);
       if (content) {
-        content.key = this.getKeyBySlide(slide);
         this.addToCache(content);
       }
     }
@@ -152,12 +136,14 @@ class ContentLoader {
    */
   addToCache(content) {
     // move to the end of array
-    this.removeByKey(content.key);
+    this.removeByIndex(content.index);
     this._cachedItems.push(content);
 
     if (this._cachedItems.length > this.limit) {
       // Destroy the first content that's not attached
-      const indexToRemove = this._cachedItems.findIndex(item => !item.isAttached);
+      const indexToRemove = this._cachedItems.findIndex((item) => {
+        return !item.isAttached && !item.hasSlide;
+      });
       if (indexToRemove !== -1) {
         const removedItem = this._cachedItems.splice(indexToRemove, 1)[0];
         removedItem.destroy();
@@ -168,21 +154,17 @@ class ContentLoader {
   /**
    * Removes an image from cache, does not destroy() it, just removes.
    *
-   * @param {String} key
+   * @param {Integer} index
    */
-  removeByKey(key) {
-    const indexToRemove = this._cachedItems.findIndex(item => item.key === key);
+  removeByIndex(index) {
+    const indexToRemove = this._cachedItems.findIndex(item => item.index === index);
     if (indexToRemove !== -1) {
       this._cachedItems.splice(indexToRemove, 1);
     }
   }
 
-  getContentByKey(key) {
-    return this._cachedItems.find(content => content.key === key);
-  }
-
-  getKeyBySlide(slide) {
-    return getKey(slide.data, slide.index);
+  getContentByIndex(index) {
+    return this._cachedItems.find(content => content.index === index);
   }
 
   destroy() {
