@@ -1,5 +1,5 @@
 /*!
-  * PhotoSwipe 5.2.0-beta.5 - https://photoswipe.com
+  * PhotoSwipe 5.2.3 - https://photoswipe.com
   * (c) 2022 Dmytro Semenov
   */
 /**
@@ -201,7 +201,7 @@ try {
       supportsPassive = true;
     }
   }));
-} catch (e) { }
+} catch (e) {}
 /* eslint-enable */
 
 class DOMEvents {
@@ -729,9 +729,9 @@ class Slide {
 
     // Avoid appending heavy elements during animations
     if (this.heavyAppended
-      || !pswp.opener.isOpen
-      || pswp.mainScroll.isShifted()
-      || (!this.isActive && !appendHeavyNearby)) {
+        || !pswp.opener.isOpen
+        || pswp.mainScroll.isShifted()
+        || (!this.isActive && !appendHeavyNearby)) {
       return;
     }
 
@@ -833,7 +833,7 @@ class Slide {
 
   sizeChanged(width, height) {
     if (width !== this.prevDisplayedWidth
-      || height !== this.prevDisplayedHeight) {
+        || height !== this.prevDisplayedHeight) {
       this.prevDisplayedWidth = width;
       this.prevDisplayedHeight = height;
       return true;
@@ -861,7 +861,7 @@ class Slide {
   zoomTo(destZoomLevel, centerPoint, transitionDuration, ignoreBounds) {
     const { pswp } = this;
     if (!this.isZoomable()
-      || pswp.mainScroll.isShifted()) {
+        || pswp.mainScroll.isShifted()) {
       return;
     }
 
@@ -1100,9 +1100,9 @@ class DragHandler {
     const { currSlide } = pswp;
 
     if (dragAxis === 'y'
-      && pswp.options.closeOnVerticalDrag
-      && currSlide.currZoomLevel <= currSlide.zoomLevels.fit
-      && !this.gestures.isMultitouch) {
+        && pswp.options.closeOnVerticalDrag
+        && currSlide.currZoomLevel <= currSlide.zoomLevels.fit
+        && !this.gestures.isMultitouch) {
       // Handle vertical drag to close
       const panY = currSlide.pan.y + (p1.y - prevP1.y);
       if (!pswp.dispatch('verticalDrag', { panY }).defaultPrevented) {
@@ -1149,12 +1149,12 @@ class DragHandler {
       //   and velocity is close to 0
       //
       if ((velocity.x < -MIN_NEXT_SLIDE_SPEED && currentSlideVisibilityRatio < 0)
-        || (velocity.x < 0.1 && currentSlideVisibilityRatio < -0.5)) {
+          || (velocity.x < 0.1 && currentSlideVisibilityRatio < -0.5)) {
         // Go to next slide
         indexDiff = 1;
         velocity.x = Math.min(velocity.x, 0);
       } else if ((velocity.x > MIN_NEXT_SLIDE_SPEED && currentSlideVisibilityRatio > 0)
-        || (velocity.x > -0.1 && currentSlideVisibilityRatio > 0.5)) {
+          || (velocity.x > -0.1 && currentSlideVisibilityRatio > 0.5)) {
         // Go to prev slide
         indexDiff = -1;
         velocity.x = Math.max(velocity.x, 0);
@@ -1165,7 +1165,7 @@ class DragHandler {
 
     // Restore zoom level
     if (pswp.currSlide.currZoomLevel > pswp.currSlide.zoomLevels.max
-      || this.gestures.isMultitouch) {
+        || this.gestures.isMultitouch) {
       this.gestures.zoomLevels.correctZoomPan(true);
     } else {
       // we run two animations instead of one,
@@ -1199,7 +1199,7 @@ class DragHandler {
       // If we are above and moving upwards,
       // or if we are below and moving downwards
       if ((vDragRatio < 0 && projectedVDragRatio < -MIN_RATIO_TO_CLOSE)
-        || (vDragRatio > 0 && projectedVDragRatio > MIN_RATIO_TO_CLOSE)) {
+          || (vDragRatio > 0 && projectedVDragRatio > MIN_RATIO_TO_CLOSE)) {
         pswp.close();
         return;
       }
@@ -1277,9 +1277,9 @@ class DragHandler {
     const newPan = currSlide.pan[axis] + delta;
 
     if (pswp.options.allowPanToNext
-      && dragAxis === 'x'
-      && axis === 'x'
-      && !isMultitouch) {
+        && dragAxis === 'x'
+        && axis === 'x'
+        && !isMultitouch) {
       const currSlideMainScrollX = mainScroll.getCurrSlideX();
 
       // Position of the main scroll relative to the viewport
@@ -1359,7 +1359,7 @@ class DragHandler {
    */
   _getVerticalDragRatio(panY) {
     return (panY - this.pswp.currSlide.bounds.center.y)
-      / (this.pswp.viewportSize.y / 3);
+            / (this.pswp.viewportSize.y / 3);
   }
 
   /**
@@ -1432,8 +1432,8 @@ class ZoomHandler {
     getZoomPointsCenter(this._zoomPoint, p1, p2);
 
     let currZoomLevel = (1 / getDistanceBetween(startP1, startP2))
-      * getDistanceBetween(p1, p2)
-      * this._startZoomLevel;
+                      * getDistanceBetween(p1, p2)
+                      * this._startZoomLevel;
 
     // slightly over the zoom.fit
     if (currZoomLevel > currSlide.zoomLevels.initial + (currSlide.zoomLevels.initial / 15)) {
@@ -1442,8 +1442,8 @@ class ZoomHandler {
 
     if (currZoomLevel < minZoomLevel) {
       if (pswp.options.pinchToClose
-        && !this._wasOverFitZoomLevel
-        && this._startZoomLevel <= currSlide.zoomLevels.initial) {
+          && !this._wasOverFitZoomLevel
+          && this._startZoomLevel <= currSlide.zoomLevels.initial) {
         // fade out background if zooming out
         const bgOpacity = 1 - ((minZoomLevel - currZoomLevel) / (minZoomLevel / 1.2));
         if (!pswp.dispatch('pinchClose', { bgOpacity }).defaultPrevented) {
@@ -1469,8 +1469,8 @@ class ZoomHandler {
     const { pswp } = this;
     const { currSlide } = pswp;
     if (currSlide.currZoomLevel < currSlide.zoomLevels.initial
-      && !this._wasOverFitZoomLevel
-      && pswp.options.pinchToClose) {
+        && !this._wasOverFitZoomLevel
+        && pswp.options.pinchToClose) {
       pswp.close();
     } else {
       this.correctZoomPan();
@@ -1480,7 +1480,7 @@ class ZoomHandler {
   _calculatePanForZoomLevel(axis, currZoomLevel) {
     const zoomFactor = currZoomLevel / this._startZoomLevel;
     return this._zoomPoint[axis]
-      - ((this._startZoomPoint[axis] - this._startPan[axis]) * zoomFactor);
+            - ((this._startZoomPoint[axis] - this._startPan[axis]) * zoomFactor);
   }
 
   /**
@@ -1586,7 +1586,7 @@ class ZoomHandler {
 
           if (currZoomLevelNeedsChange) {
             const newZoomLevel = prevZoomLevel
-              + (destinationZoomLevel - prevZoomLevel) * now;
+                        + (destinationZoomLevel - prevZoomLevel) * now;
             currSlide.setZoomLevel(newZoomLevel);
           }
 
@@ -1636,7 +1636,7 @@ class TapHandler {
     const targetClassList = originalEvent.target.classList;
     const isImageClick = targetClassList.contains('pswp__img');
     const isBackgroundClick = targetClassList.contains('pswp__item')
-      || targetClassList.contains('pswp__zoom-wrap');
+                              || targetClassList.contains('pswp__zoom-wrap');
 
     if (isImageClick) {
       this._doClickOrTapAction('imageClick', point, originalEvent);
@@ -1683,7 +1683,7 @@ class TapHandler {
         // by default click zooms current image,
         // if it can not be zoomed - gallery will be closed
         if (currSlide.isZoomable()
-          && currSlide.zoomLevels.secondary !== currSlide.zoomLevels.initial) {
+            && currSlide.zoomLevels.secondary !== currSlide.zoomLevels.initial) {
           currSlide.toggleZoom(point);
         } else if (pswp.options.clickToCloseNonZoomable) {
           pswp.close();
@@ -1740,7 +1740,7 @@ class Gestures {
     this._touchEventEnabled = 'ontouchstart' in window;
     this._pointerEventEnabled = !!(window.PointerEvent);
     this.supportsTouch = this._touchEventEnabled
-      || (this._pointerEventEnabled && navigator.maxTouchPoints > 1);
+                          || (this._pointerEventEnabled && navigator.maxTouchPoints > 1);
 
     if (!this.supportsTouch) {
       // disable pan to next slide for non-touch devices
@@ -1767,8 +1767,8 @@ class Gestures {
         // and you don't preventDefault touchstart (which PhotoSwipe does),
         // preventDefault will have no effect on touchmove and touchend.
         // Unless you bind it previously.
-        pswp.scrollWrap.ontouchmove = () => { }; // eslint-disable-line
-        pswp.scrollWrap.ontouchend = () => { }; // eslint-disable-line
+        pswp.scrollWrap.ontouchmove = () => {}; // eslint-disable-line
+        pswp.scrollWrap.ontouchend = () => {}; // eslint-disable-line
       } else {
         this._bindEvents('mouse', 'down', 'up');
       }
@@ -1970,7 +1970,7 @@ class Gestures {
         }
       } else /* if (this.isZooming) */ {
         if (!pointsEqual(this.p1, this.prevP1)
-          || !pointsEqual(this.p2, this.prevP2)) {
+            || !pointsEqual(this.p2, this.prevP2)) {
           this.zoomLevels.change();
         }
       }
@@ -2255,7 +2255,7 @@ class MainScroll {
     this.itemHolders.forEach((itemHolder, index) => {
       if (slideWidthChanged) {
         setTransform(itemHolder.el, (index + this._containerShiftIndex)
-          * this.slideWidth);
+                                    * this.slideWidth);
       }
 
       if (resizeSlides && itemHolder.slide) {
@@ -2502,7 +2502,7 @@ class MainScroll {
       delta = Math.round(x - this.x);
 
       if ((newSlideIndexOffset < 0 && delta > 0)
-        || (newSlideIndexOffset >= this.pswp.getNumItems() - 1 && delta < 0)) {
+          || (newSlideIndexOffset >= this.pswp.getNumItems() - 1 && delta < 0)) {
         x = this.x + (delta * MAIN_SCROLL_END_FRICTION);
       }
     }
@@ -2755,7 +2755,7 @@ class SpringEaser {
 
     if (this._dampingRatio < 1) {
       this._dampedFrequency = this._naturalFrequency
-        * Math.sqrt(1 - this._dampingRatio * this._dampingRatio);
+                         * Math.sqrt(1 - this._dampingRatio * this._dampingRatio);
     }
   }
 
@@ -2784,24 +2784,24 @@ class SpringEaser {
       displacement = (deltaPosition + coeff * deltaTime) * naturalDumpingPow;
 
       this.velocity = displacement
-        * (-this._naturalFrequency) + coeff
-        * naturalDumpingPow;
+                        * (-this._naturalFrequency) + coeff
+                        * naturalDumpingPow;
     } else if (this._dampingRatio < 1) {
       coeff = (1 / this._dampedFrequency)
-        * (this._dampingRatio * this._naturalFrequency * deltaPosition + this.velocity);
+                * (this._dampingRatio * this._naturalFrequency * deltaPosition + this.velocity);
 
       const dumpedFCos = Math.cos(this._dampedFrequency * deltaTime);
       const dumpedFSin = Math.sin(this._dampedFrequency * deltaTime);
 
       displacement = naturalDumpingPow
-        * (deltaPosition * dumpedFCos + coeff * dumpedFSin);
+                       * (deltaPosition * dumpedFCos + coeff * dumpedFSin);
 
       this.velocity = displacement
-        * (-this._naturalFrequency)
-        * this._dampingRatio
-        + naturalDumpingPow
-        * (-this._dampedFrequency * deltaPosition * dumpedFSin
-          + this._dampedFrequency * coeff * dumpedFCos);
+                        * (-this._naturalFrequency)
+                        * this._dampingRatio
+                        + naturalDumpingPow
+                        * (-this._dampedFrequency * deltaPosition * dumpedFSin
+                        + this._dampedFrequency * coeff * dumpedFCos);
     }
 
     // Overdamped (>1) damping ratio is not supported
@@ -3279,8 +3279,8 @@ const counterIndicator = {
   onInit: (counterElement, pswp) => {
     pswp.on('change', () => {
       counterElement.innerText = (pswp.currIndex + 1)
-        + pswp.options.indexIndicatorSep
-        + pswp.getNumItems();
+                                  + pswp.options.indexIndicatorSep
+                                  + pswp.getNumItems();
     });
   }
 };
@@ -3391,7 +3391,7 @@ class UI {
     }
 
     if (options.imageClickAction === 'zoom'
-      || options.imageClickAction === 'zoom-or-close') {
+        || options.imageClickAction === 'zoom-or-close') {
       template.classList.add('pswp--click-to-zoom');
     }
   }
@@ -3780,8 +3780,8 @@ class Content {
 
       // if content is reloaded
       if (this.slide.isActive
-        && this.slide.heavyAppended
-        && !this.element.parentNode) {
+          && this.slide.heavyAppended
+          && !this.element.parentNode) {
         this.slide.container.innerHTML = '';
         this.append();
         this.slide.updateContentSize(true);
@@ -3853,7 +3853,7 @@ class Content {
       // Chrome does this automatically, Firefox and Safari do not,
       // so we store largest used size in dataset.
       if (image.srcset
-        && (!image.dataset.largestUsedSize || width > image.dataset.largestUsedSize)) {
+          && (!image.dataset.largestUsedSize || width > image.dataset.largestUsedSize)) {
         image.sizes = width + 'px';
         image.dataset.largestUsedSize = width;
       }
@@ -3979,8 +3979,8 @@ class Content {
       // that's because I want to show image before it's fully loaded,
       // as browser can render parts of image while it is loading.
       if (this.slide
-        && !this.slide.isActive
-        && ('decode' in this.element)) {
+          && !this.slide.isActive
+          && ('decode' in this.element)) {
         this.isDecoding = true;
         // Make sure that we start decoding on the next frame
         requestAnimationFrame(() => {
@@ -4326,8 +4326,8 @@ class Opener {
     // Discard animations when duration is less than 50ms
     this._useAnimation = (this._duration > 50);
     this._animateZoom = Boolean(this._thumbBounds)
-      && (slide.content && slide.content.usePlaceholder())
-      && (!this.isClosing || !pswp.mainScroll.isShifted());
+                        && (slide.content && slide.content.usePlaceholder())
+                        && (!this.isClosing || !pswp.mainScroll.isShifted());
     if (!this._animateZoom) {
       this._animateRootOpacity = true;
 
@@ -4406,9 +4406,9 @@ class Opener {
 
   _start() {
     if (this.isOpening
-      && this._useAnimation
-      && this._placeholder
-      && this._placeholder.tagName === 'IMG') {
+        && this._useAnimation
+        && this._placeholder
+        && this._placeholder.tagName === 'IMG') {
       // To ensure smooth animation
       // we wait till the current slide image placeholder is decoded,
       // but no longer than 250ms,
@@ -4522,7 +4522,7 @@ class Opener {
     }
 
     if (this._animateBgOpacity
-      && pswp.bgOpacity > 0.01) { // do not animate opacity if it's already at 0
+        && pswp.bgOpacity > 0.01) { // do not animate opacity if it's already at 0
       this._animateTo(pswp.bg, 'opacity', 0);
     }
 
@@ -4857,8 +4857,8 @@ class PhotoSwipe extends PhotoSwipeBase {
 
     // sanitize index
     if (Number.isNaN(this.currIndex)
-      || this.currIndex < 0
-      || this.currIndex >= this.getNumItems()) {
+        || this.currIndex < 0
+        || this.currIndex >= this.getNumItems()) {
       this.currIndex = 0;
     }
 

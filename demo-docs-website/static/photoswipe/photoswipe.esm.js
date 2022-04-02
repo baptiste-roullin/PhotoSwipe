@@ -1,5 +1,5 @@
 /*!
-  * PhotoSwipe 5.2.0-beta.5 - https://photoswipe.com
+  * PhotoSwipe 5.2.3 - https://photoswipe.com
   * (c) 2022 Dmytro Semenov
   */
 /**
@@ -2543,8 +2543,8 @@ class Keyboard {
     const lastActiveElement = document.activeElement;
     pswp.on('destroy', () => {
       if (pswp.options.returnFocus
-          && lastActiveElement
-          && this._wasFocused) {
+        && lastActiveElement
+        && this._wasFocused) {
         lastActiveElement.focus();
       }
     });
@@ -2581,9 +2581,6 @@ class Keyboard {
           keydownAction = 'close';
         }
         break;
-      case 90: // z key
-        keydownAction = 'toggleZoom';
-        break;
       case 37: // left
         axis = 'x';
         break;
@@ -2611,8 +2608,8 @@ class Keyboard {
       const { currSlide } = pswp;
 
       if (pswp.options.arrowKeys
-          && axis === 'x'
-          && pswp.getNumItems() > 1) {
+        && axis === 'x'
+        && pswp.getNumItems() > 1) {
         keydownAction = isForward ? 'next' : 'prev';
       } else if (currSlide && currSlide.currZoomLevel > currSlide.zoomLevels.fit) {
         // up/down arrow keys pan the image vertically
@@ -2638,8 +2635,8 @@ class Keyboard {
   _onFocusIn(e) {
     const { template } = this.pswp;
     if (document !== e.target
-        && template !== e.target
-        && !template.contains(e.target)) {
+      && template !== e.target
+      && !template.contains(e.target)) {
       // focus root element
       template.focus();
     }
@@ -3158,8 +3155,8 @@ function initArrowButton(element, pswp, isNextButton) {
 
 const arrowPrev = {
   name: 'arrowPrev',
-  className: 'pswp__button--arrow--prev',
-  title: 'Previous',
+  class: 'arrow--prev',
+  title: 'Précédent',
   order: 10,
   isButton: true,
   appendTo: 'wrapper',
@@ -3175,8 +3172,8 @@ const arrowPrev = {
 
 const arrowNext = {
   name: 'arrowNext',
-  className: 'pswp__button--arrow--next',
-  title: 'Next',
+  class: 'arrow--next',
+  title: 'Suivant',
   order: 11,
   isButton: true,
   appendTo: 'wrapper',
@@ -3194,7 +3191,7 @@ const arrowNext = {
 
 const closeButton = {
   name: 'close',
-  title: 'Close',
+  title: 'Fermer',
   order: 20,
   isButton: true,
   html: {
@@ -3207,14 +3204,14 @@ const closeButton = {
 
 const zoomButton = {
   name: 'zoom',
-  title: 'Zoom',
+  title: 'Zoomer',
   order: 10,
   isButton: true,
   html: {
     isCustomSVG: true,
     inner: '<path d="M17.426 19.926a6 6 0 1 1 1.5-1.5L23 22.5 21.5 24l-4.074-4.074z" id="pswp__icn-zoom"/>'
-          + '<path fill="currentColor" class="pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>'
-          + '<path fill="currentColor" class="pswp__zoom-icn-bar-v" d="M13 12h2v6h-2z"/>',
+      + '<path fill="currentColor" class="pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>'
+      + '<path fill="currentColor" class="pswp__zoom-icn-bar-v" d="M13 12h2v6h-2z"/>',
     outlineID: 'pswp__icn-zoom'
   },
   onClick: 'toggleZoom'
