@@ -1,6 +1,6 @@
 name: PhotoSwipe Jobs
 
-on: [push]
+on: [workflow_dispatch]
 
 jobs:
   build:
@@ -14,6 +14,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 16
+
+      - name: "github api fetch (for stars count)"
+        working-directory: demo-docs-website
+        run: curl -s https://api.github.com/repos/dimsemenov/photoswipe -o ./repo-data.json 
 
       - name: "npm install & build docs"
         working-directory: demo-docs-website
